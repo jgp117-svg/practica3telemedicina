@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicacion Sanitario</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        line-height: 1.4;
+        padding: 16px;
+        background: #f5f5f5;
+        color: #222;
+    }
+
+    #inicio, #registro, #editar-registro, #aplicacion,
+    #nueva-reserva, #nueva-resena {
+        width: min(100%, 1100px);
+        margin: 0 auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    h1, h3 {
+        margin-top: 0;
+    }
+
+    input, select, textarea, button {
+        max-width: 100%;
+        font: inherit;
+    }
+
+    input, select, textarea {
+        padding: 8px;
+        border: 1px solid #aaa;
+        border-radius: 5px;
+    }
+
+    button {
+        padding: 9px 14px;
+        margin: 4px 4px 4px 0;
+        cursor: pointer;
+    }
+
+    /* Las tablas nunca provocan scroll horizontal.
+       En móvil cada fila se transforma en una tarjeta. */
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+        overflow: hidden;
+        border: 1px solid #d9dee7;
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .movil-resumen,
+    .movil-detalles,
+    .movil-fecha,
+    .movil-horas {
+        display: none;
+    }
+
+    th, td {
+        padding: 8px;
+        border-bottom: 1px solid #e5e9ef;
+        border-right: 1px solid #e5e9ef;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        vertical-align: middle;
+    }
+
+    th:last-child, td:last-child {
+        border-right: 0;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    th {
+        background: #f1f4f8;
+        color: #3b4654;
+        font-size: 0.86rem;
+        text-align: left;
+    }
+
+    tbody tr:nth-child(even) {
+        background: #fbfcfd;
+    }
+
+    textarea {
+        width: 100%;
+        max-width: 100%;
+        resize: vertical;
+    }
+
+    @media (max-width: 700px) {
+        body {
+            padding: 8px;
+        }
+
+        #inicio, #registro, #editar-registro, #aplicacion,
+        #nueva-reserva, #nueva-resena {
+            padding: 14px;
+            border-radius: 6px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+        }
+
+        /* En móvil se conserva la tabla: filas compactas, sin tarjetas ni scroll lateral. */
+        table {
+            table-layout: fixed;
+            font-size: 0.8rem;
+        }
+
+        th,
+        td {
+            padding: 6px 3px;
+            line-height: 1.25;
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        th {
+            font-size: 0.72rem;
+            line-height: 1.15;
+            white-space: normal;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        tbody td:first-child {
+            color: #1d3557;
+            font-weight: 700;
+        }
+
+        #tabla-reservas-pendientes th:nth-child(1),
+        #tabla-reservas-pendientes td:nth-child(1) { width: 13%; }
+        #tabla-reservas-pendientes th:nth-child(2),
+        #tabla-reservas-pendientes td:nth-child(2) { width: 14%; }
+        #tabla-reservas-pendientes th:nth-child(3),
+        #tabla-reservas-pendientes td:nth-child(3) { width: 13%; }
+        #tabla-reservas-pendientes th:nth-child(4),
+        #tabla-reservas-pendientes td:nth-child(4) { width: 13%; }
+        #tabla-reservas-pendientes th:nth-child(5),
+        #tabla-reservas-pendientes td:nth-child(5) { width: 15%; }
+        #tabla-reservas-pendientes th:nth-child(6),
+        #tabla-reservas-pendientes td:nth-child(6) { width: 9%; }
+        #tabla-reservas-pendientes th:nth-child(7),
+        #tabla-reservas-pendientes td:nth-child(7) { width: 15%; }
+        #tabla-reservas-pendientes th:nth-child(8),
+        #tabla-reservas-pendientes td:nth-child(8) { width: 8%; }
+
+        #tabla-reservas-realizadas th:nth-child(1),
+        #tabla-reservas-realizadas td:nth-child(1) { width: 14%; }
+        #tabla-reservas-realizadas th:nth-child(2),
+        #tabla-reservas-realizadas td:nth-child(2) { width: 15%; }
+        #tabla-reservas-realizadas th:nth-child(3),
+        #tabla-reservas-realizadas td:nth-child(3) { width: 14%; }
+        #tabla-reservas-realizadas th:nth-child(4),
+        #tabla-reservas-realizadas td:nth-child(4) { width: 10%; }
+        #tabla-reservas-realizadas th:nth-child(5),
+        #tabla-reservas-realizadas td:nth-child(5) { width: 30%; }
+        #tabla-reservas-realizadas th:nth-child(6),
+        #tabla-reservas-realizadas td:nth-child(6) { width: 17%; }
+
+        #tabla-nueva-reserva th:nth-child(1),
+        #tabla-nueva-reserva td:nth-child(1) { width: 20%; }
+        #tabla-nueva-reserva th:nth-child(2),
+        #tabla-nueva-reserva td:nth-child(2) { width: 24%; }
+        #tabla-nueva-reserva th:nth-child(3),
+        #tabla-nueva-reserva td:nth-child(3) { width: 14%; }
+        #tabla-nueva-reserva th:nth-child(4),
+        #tabla-nueva-reserva td:nth-child(4) { width: 20%; }
+        #tabla-nueva-reserva th:nth-child(5),
+        #tabla-nueva-reserva td:nth-child(5) { width: 22%; }
+
+        #aplicacion > table:not(#tabla-reservas-pendientes):not(#tabla-reservas-realizadas) th:nth-child(1),
+        #aplicacion > table:not(#tabla-reservas-pendientes):not(#tabla-reservas-realizadas) td:nth-child(1) { width: 18%; }
+        #aplicacion > table:not(#tabla-reservas-pendientes):not(#tabla-reservas-realizadas) th:nth-child(2),
+        #aplicacion > table:not(#tabla-reservas-pendientes):not(#tabla-reservas-realizadas) td:nth-child(2) { width: 22%; }
+        #aplicacion > table:not(#tabla-reservas-pendientes):not(#tabla-reservas-realizadas) th:nth-child(3),
+        #aplicacion > table:not(#tabla-reservas-pendientes):not(#tabla-reservas-realizadas) td:nth-child(3) { width: 60%; }
+
+        tbody td button {
+            width: auto;
+            min-height: 30px;
+            max-width: 100%;
+            padding: 4px 3px;
+            margin: 0;
+            font-size: 0.66rem;
+            line-height: 1.1;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+        #tabla-reservas-realizadas td:nth-child(5) {
+            white-space: normal;
+            overflow-wrap: normal;
+            word-break: normal;
+            font-size: 0.75rem;
+        }
+
+        .periodo-reserva {
+            white-space: normal;
+            text-align: center;
+        }
+
+        .periodo-reserva span {
+            display: inline-block;
+        }
+
+        .periodo-flecha {
+            padding: 0 2px;
+            color: #667085;
+        }
+
+        #tabla-reservas-realizadas td:nth-child(6) {
+            text-align: center;
+        }
+
+        #tabla-reservas-realizadas td:nth-child(6) button {
+            padding: 3px 2px;
+            font-size: 0.64rem;
+        }
+
+        #tabla-reservas-pendientes tbody td:nth-child(8) button {
+            min-width: 0;
+            padding: 4px 0;
+        }
+
+        /* En móvil las reservas se leen como filas compactas, al estilo de una bandeja de mensajes. */
+        table#tabla-reservas-pendientes,
+        table#tabla-reservas-realizadas,
+        table#tabla-nueva-reserva {
+            display: block;
+            border: 0;
+            background: transparent;
+        }
+
+        table#tabla-reservas-pendientes thead,
+        table#tabla-reservas-realizadas thead,
+        table#tabla-nueva-reserva thead {
+            display: none;
+        }
+
+        table#tabla-reservas-pendientes tbody,
+        table#tabla-reservas-realizadas tbody,
+        table#tabla-nueva-reserva tbody {
+            display: block;
+        }
+
+        table#tabla-reservas-pendientes tbody tr,
+        table#tabla-reservas-realizadas tbody tr,
+        table#tabla-nueva-reserva tbody tr {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0 8px;
+            margin: 0;
+            padding: 8px 0;
+            border: 0;
+            border-bottom: 1px solid #e5e9ef;
+            background: transparent;
+        }
+
+        table#tabla-reservas-pendientes td,
+        table#tabla-reservas-realizadas td,
+        table#tabla-nueva-reserva td {
+            display: block;
+            width: auto;
+            padding: 0;
+            border: 0;
+            background: transparent;
+        }
+
+        .movil-resumen,
+        .movil-detalles,
+        .movil-fecha,
+        .movil-horas {
+            display: flex;
+            min-width: 0;
+            text-align: left;
+        }
+
+        .movil-resumen {
+            grid-area: summary;
+            flex-direction: column;
+            gap: 1px;
+            font-size: 0.86rem;
+            line-height: 1.15;
+            overflow-wrap: normal;
+            word-break: normal;
+        }
+
+        .movil-resumen strong {
+            color: #1d3557;
+        }
+
+        #tabla-nueva-reserva .movil-resumen strong {
+            white-space: nowrap;
+            overflow-wrap: normal;
+            word-break: normal;
+        }
+
+        .movil-resumen span {
+            color: #667085;
+            font-size: 0.76rem;
+        }
+
+        .movil-detalles {
+            grid-area: details;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            color: #667085;
+            font-size: 0.7rem;
+            line-height: 1.2;
+            width: 100%;
+            overflow: visible;
+        }
+
+        .movil-detalles span {
+            display: inline-block;
+            min-width: 0;
+            white-space: nowrap;
+        }
+
+        .movil-horas-inline {
+            margin-left: auto;
+            color: #344054;
+            font-weight: 600;
+        }
+
+        .movil-hrestantes {
+            white-space: nowrap;
+        }
+
+        .movil-horas {
+            display: none;
+        }
+
+        #tabla-reservas-pendientes .movil-detalles {
+            position: relative;
+            top: -4px;
+        }
+
+        table#tabla-reservas-pendientes td.movil-horas,
+        table#tabla-reservas-realizadas td.movil-horas {
+            display: none !important;
+        }
+
+        .celda-horas-escritorio {
+            display: none !important;
+        }
+
+        .movil-fecha {
+            grid-area: fecha;
+            align-items: start;
+            justify-content: flex-end;
+            color: #667085;
+            font-size: 0.68rem;
+            line-height: 1.2;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .movil-horas {
+            grid-area: horas;
+            align-items: center;
+            justify-content: flex-end;
+            color: #667085;
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+
+        #tabla-reservas-pendientes tbody tr {
+            grid-template-columns: minmax(0, 1fr) max-content max-content;
+            grid-template-areas: "summary fecha cancel" "details details action";
+        }
+
+        #tabla-reservas-pendientes tbody td:nth-child(n+5):nth-child(-n+10),
+        #tabla-reservas-realizadas tbody td:nth-child(n+5):nth-child(-n+9),
+        #tabla-nueva-reserva tbody td:nth-child(n+3):nth-child(-n+6) {
+            display: none;
+        }
+
+        #tabla-reservas-pendientes tbody td:nth-child(11),
+        #tabla-reservas-realizadas tbody td:nth-child(10),
+        #tabla-nueva-reserva tbody td:nth-child(7) {
+            grid-area: action;
+            align-self: center;
+            text-align: right;
+        }
+
+        #tabla-reservas-pendientes tbody td:nth-child(12) {
+            grid-area: cancel;
+            align-self: start;
+            text-align: right;
+        }
+
+        #tabla-reservas-realizadas tbody tr {
+            grid-template-columns: minmax(0, 1fr) max-content max-content;
+            grid-template-areas: "summary fecha action" "details details action";
+        }
+
+        #tabla-nueva-reserva tbody tr {
+            grid-template-areas: "summary action" "details action";
+        }
+
+        #tabla-reservas-pendientes tbody td:nth-child(11) button,
+        #tabla-reservas-pendientes tbody td:nth-child(12) button,
+        #tabla-reservas-realizadas tbody td:nth-child(10) button,
+        #tabla-nueva-reserva tbody td:nth-child(7) button {
+            min-width: 0;
+            max-width: 76px;
+            padding: 5px 7px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+
+    }
+</style>
+
+</head>
+<body>
+   
+    <div id="inicio">
+        <h1> Acceso</h1>
+        usuario :<input id="usuario" type="text"><br><br>
+        contrasena : <input id="contrasena" type ="password"><br><br>
+        <button onclick="entrar()"> Entrar</button> 
+        <button onclick="cambiarseccion('registro')">Registrarse</button> 
+        <button onclick="window.location.href='index.html'">Acceso Gestor</button>
+    </div>
+
+    <div id ="registro"style="display:none;">
+        <h1> Datos Sanitario</h1>
+        usuario :<input id="usuario-registro" type="text"> <br><br>
+        contrasena : <input id="contrasena-registro" type ="password"><br><br>
+        nombre:<input id="nombre" type="text"> <br><br>
+        apellido : <input id="apellido" type ="text"><br><br>
+        <label>Área Médica:</label>
+        <select id="area-medica">
+            <option value="1">Alergología</option>
+            <option value="2">Anestesiología</option>
+            <option value="3">Cardiología</option>
+            <option value="4">Cirugía General</option>
+            <option value="5">Dermatología</option>
+            <option value="6">Aparato Digestivo</option>
+            <option value="7">Endocrinología</option>
+            <option value="8">Ginecología</option>
+            <option value="9">Hematología</option>
+            <option value="10">Medicina Interna</option>
+            <option value="11">Neumología</option>
+            <option value="12">Neurología</option>
+            <option value="13">Oftalmología</option>
+            <option value="14">Oncología</option>
+            <option value="15">Pediatría</option>
+            <option value="16">Psiquiatría</option>
+            <option value="17">Traumatología</option>
+            <option value="18">Urología</option>
+        </select>
+        <button onclick="registrarse()"> Guardar </button> 
+        <button onclick="cambiarseccion('inicio')">Salir</button>
+    </div>
+
+    <div id="editar-registro"style="display:none;">
+        <h1> Editar datos usuario</h1>
+        usuario:<input id="editar-usuario" type="text"><br><br>
+        contrasena:<input id="editar-contrasena" type="password"><br><br>
+        nombre:<input id="editar-nombre" type="text"><br><br>
+        apellido:<input id="editar-apellido" type="text"><br><br>
+        <label>Área Médica:</label>
+        <select id="area-medica">
+            <option value="1">Alergología</option>
+            <option value="2">Anestesiología</option>
+            <option value="3">Cardiología</option>
+            <option value="4">Cirugía General</option>
+            <option value="5">Dermatología</option>
+            <option value="6">Aparato Digestivo</option>
+            <option value="7">Endocrinología</option>
+            <option value="8">Ginecología</option>
+            <option value="9">Hematología</option>
+            <option value="10">Medicina Interna</option>
+            <option value="11">Neumología</option>
+            <option value="12">Neurología</option>
+            <option value="13">Oftalmología</option>
+            <option value="14">Oncología</option>
+            <option value="15">Pediatría</option>
+            <option value="16">Psiquiatría</option>
+            <option value="17">Traumatología</option>
+            <option value="18">Urología</option>
+        </select>
+        <button onclick="guardardatosusuario()"> Guardar cambios</button> 
+        <button onclick="cambiarseccion('aplicacion')"> Cancelar</button>
+    </div>
+
+    <div id="aplicacion" style="display:none;">
+        <h1> Inicio</h1>
+         Bienvenido  <span id="nombre-sanitario-bienvenida"></span> 
+        <button onclick="editardatosusuario()">Editar datos usuario</button>
+        
+        
+        <br><hr><br>
+        <h3>Asignar Area</h3>
+        Código postal:<input id="codigo-postal" type="text"><br></br>
+        <button onclick="asignarAreaSan()">Asignar area</button>
+
+        <br><hr><br>
+
+        <h3> Reservas Pendientes</h3>                    
+        <table id="tabla-reservas-pendientes" border="1">  
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>Modelo</th>
+                    <th>N. Serie</th>
+                    <th>Ubicación</th>
+                    <th>Petición</th>
+                    <th>H. Rest.</th>
+                    <th>Acción</th>
+                    <th>Cancelar</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla-reservas-pendientes"></tbody>
+        </table>
+        <br>
+        <h3> Reservas Realizadas</h3>
+        <table id="tabla-reservas-realizadas" border="1">
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>Modelo</th>
+                    <th>N. Serie</th>
+                    <th>Horas</th>
+                    <th>Periodo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla-reservas-realizadas"></tbody>
+        </table>
+        <br>
+
+        <button onclick="nuevareserva()"> Nueva reserva</button> 
+        <button onclick="salir()"> Salir </button> 
+
+        <br><hr><br>
+        <h3>Avisos del Sistema</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Origen</th>
+                    <th>Aviso</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-avisos">
+              </tbody>
+        </table>
+        <br><hr><br>
+
+        <input type="text" id="inputCodigoNFC" placeholder="Código de recurso">
+        <button id="btnEscribirNFC">Escribir NFC</button>
+</div>
+    </div>
+
+    <div id="nueva-reserva" style="display:none;">    
+        <h3> Nueva Reserva </h3> 
+        Categoria: <select id="categoria" onchange="filtrarModelos()"></select><br><br>        
+        Modelo: <select id="modelo"></select><br><br>                                                                                                  
+        Horas de uso: <input id="Tiempo" type="number" value="1" min="1"> 
+        <Button onclick="buscarreserva()"> Buscar</button><br><br> 
+        <table id="tabla-nueva-reserva" border="1"> 
+            <thead>
+                <tr>
+                    <th>N. Serie</th>
+                    <th>Ubicación</th>
+                    <th>H. Rest.</th>
+                    <th>Valoración</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla-nueva-reserva"></tbody>
+        </table>
+
+        <button onclick="cambiarseccion('aplicacion')"> Cancelar</button>
+
+    </div>
+
+    <div id="nueva-resena" style="display:none;">
+        <h3> Reseña nueva </h3>
+        Recurso: <span id="Recurso"></span><br><br>
+        Valoracion: <select id="Valoracion">  
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+        </select><br><br>
+        Texto: <br><textarea id="Texto" rows="4" cols="30"></textarea><br><br>
+        <button onclick="guardarnuevaresena()"> Guardar </button> 
+        <button onclick="cambiarseccion('aplicacion')"> Cancelar</button>
+    </div>
+    <script src="cordova.js"></script>
+    <script src="rest.js"></script>
+    <script src="rpc.js"></script>
+    <script src="sanitario.js"></script>
+
+    
+</body>
+</html>

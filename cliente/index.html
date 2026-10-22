@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicacion Gestor</title>
+</head>
+<body>
+   
+    <div id="inicio">
+        <h1> Acceso</h1>
+        usuario :<input id="usuario" type="text"><br><br>
+        contrasena : <input id="contrasena" type ="password"><br><br>
+        <button onclick="entrar()"> Entrar</button>
+        <button onclick="cambiarseccion('registro')">Registrarse</button>
+        <button onclick="window.location.href='sanitario.html'">Acceso Sanitario</button>
+    </div>
+
+    <div id ="registro">
+        <h1> Registro</h1>
+        usuario :<input id="usuario-registro" type="text"> <br><br>
+        contrasena : <input id="contrasena-registro" type ="password"><br><br>
+        nombre:<input id="nombre" type="text"> <br><br>
+        apellido : <input id="apellido" type ="text"><br><br>s
+        <button onclick="registrarse()"> Guardar </button>
+        <button onclick="cambiarseccion('inicio')">Salir</button>
+    </div>
+
+    <div id="editar-registro">
+        <h1> Editar datos usuario</h1>
+        usuario:<input id="editar-usuario" type="text"><br><br>
+        contrasena:<input id="editar-contrasena" type="password"><br><br>
+        nombre:<input id="editar-nombre" type="text"><br><br>
+        apellido:<input id="editar-apellido" type="text"><br><br>
+        <button onclick="guardardatosusuario()"> Guardar cambios</button>
+        <button onclick="cambiarseccion('aplicacion')"> Cancelar</button>
+    </div>
+
+    <div id="aplicacion">
+        <h1> Inicio</h1>
+         Bienvenido  <span id="nombre-gestor-bienvenida"></span> 
+        <button onclick="editardatosusuario()">Editar datos usuario</button>
+
+        <h3>Crear area de salud</h3>
+        Código postal: <input id="codigo" type="text"><br></br>
+        Nombre: <input id="nombre_area" type="text"><br></br>
+        <button onclick="crearArea()">Crear area</button>
+
+        <h3>Ranking de reservas por area</h3>
+        <button onclick="cargarRanking()">Actualizar ranking</button>
+        <button onclick="enviarDatosMinisterio()">Enviar reservas al Ministerio</button>
+        <span id="estado-ministerio"></span>
+        <table id="tabla-ranking" border="1">
+            <thead>
+                <tr>
+                    <th>Posicion</th>
+                    <th>Id area</th>
+                    <th>Reservas totales</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla-ranking"></tbody>
+        </table>
+
+
+        <h3> Busqueda de recursos</h3> 
+        Catgeoria: <select id="categoria"></select><br><br>
+        Modelo: <select id="modelo"></select><br><br>
+        Ubicacion: <select id="ubicacion"></select><br><br>
+        Estado: <select id="estado">
+            <option value="">Todos</option>
+            <option value="0">Operativo</option>
+            <option value="1">Baja</option>
+            <option value="2">Mantenimiento</option>
+        </select><br><br>
+        <button onclick="buscarrecursos()"> Buscar /actualizar lista </button>
+
+        <h3> Lista de recursos</h3>
+        <table id="tabla-recursos" border="1">
+            <thead>
+                <tr>
+                    <th>N.serie</th>
+                    <th>Categoria</th>
+                    <th>Modelo</th>
+                    <th>Ubicacion</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla"></tbody>
+        </table>
+        <br>
+        <button onclick="añadirrecurso()"> Añadir recurso</button> 
+        <button onclick="salir()"> Salir </button>
+
+        <br><hr><br>
+        <h3>Avisos del Sistema</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Origen</th>
+                    <th>Aviso</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-avisos">
+              </tbody>
+        </table>
+        <br><hr><br>
+    </div>
+
+    <div id="ficha-recurso"> 
+        <h2> Recurso</h2> 
+        Categoria: <select id="categoria-ficha" onchange="filtrarModelosFicha()"></select><br><br>
+        Modelo: <select id="modelo-ficha"></select><br><br>
+        N. Serie: <input id="nserie-ficha"><br><br>
+        Ubicacion: <select id="ubicacion-ficha"></select><br><br>
+        Estado: <select id="estado-ficha">
+            <option value="0">Operativo</option>
+            <option value="1">Baja</option>
+            <option value="2">Mantenimiento</option>
+        </select><br><br>
+        <button onclick="guardarrecurso()"> Guardar </button> 
+        <br>
+        <h2> Reservas</h2>
+        <table id="tabla-reservas" border="1">
+            <thead>
+                <tr>
+                    <th>Sanitario</th>
+                    <th>H.estim.</th>
+                    <th>F.peticion</th>
+                    <th>F.inicio</th>
+                    <th>F.fin</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla-reservas"></tbody>
+       </table>
+
+       <br>
+       <h2> Reseñas</h2>
+         <table id="tabla-resenas" border="1">
+                <thead>
+                 <tr>
+                      <th>Fecha</th>
+                      <th>Sanitario</th>
+                      <th>Valoracion</th>
+                      <th>Comentario</th>
+                 </tr>
+                </thead>
+                <tbody id="cuerpo-tabla-resenas"></tbody>
+        </table><br><br>
+        <button onclick="cambiarseccion('aplicacion')"> Volver al listado </button>
+    </div>
+    
+</body>
+<script src="rest.js"></script>
+<script src="main.js"></script>
+</html>
