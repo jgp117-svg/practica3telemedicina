@@ -10,7 +10,7 @@ var escrituraNFCEnCurso = false;
 var listenerLecturaNFC = null;
 var listenerEscrituraNFC = null;
 
-var rpcCliente = rpc("192.168.137.1", 3501, "hospital");
+var rpcCliente = rpc("https://practica3telemedicina-lofu.onrender.com", 80, "hospital");
 
 var loginSanitario = rpcCliente.procedure("loginSanitario");
 var obtenerSanitario = rpcCliente.procedure("obtenerSanitario");
