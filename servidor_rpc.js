@@ -1,5 +1,8 @@
 var rpc = require("./rpc.js");
-var conexion = require('./conexion_mysql.js');
+const { createClient } = require('@supabase/supabase-js');
+const supabaseUrl = 'https://wtykvfgfwzmsktvkkwcn.supabase.co';
+const supabaseKey = 'sb_publishable_YIvkOe8llfa2yH7En4iJYg_Dlt-6VbO';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 module.exports = function(datos) {
 
@@ -8,178 +11,112 @@ module.exports = function(datos) {
     });
     var appRPC = servidorRPC.createApp("hospital");
     
-    //LA PAGINA DE SANITARIO SE ABRE CON http://localhost:3000/sanitario.html !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
-    
-    appRPC.registerAsync("loginSanitario", function(u, p, callback) {
-        var query = "SELECT id FROM sanitarios WHERE usuario = ? AND password = ?";
+    appRPC.registerAsync("loginSanitario", async function(u, p, callback) {
+        var resultado = await supabase.from("sanitarios").select("id").eq("usuario", u).eq("password", p).maybeSingle();
+        if (resultado.error || !resultado.data) return callback(null);
+        callback(resultado.data.id);
+    });
+
+    appRPC.registerAsync("obtenerSanitario", async function(id, callback) {
+        var resultado = await supabase.from("sanitarios").select("*").eq("id", id).maybeSingle();
+        if (resultado.error || !resultado.data) return callback(null);
+        callback(resultado.data);
+    });
+
+    appRPC.registerAsync("crearSanitario", async function(nuevoSanitario, callback) {
+        var existente = await supabase.from("sanitarios").select("id").eq("usuario", nuevoSanitario.usuario).maybeSingle();
+        if (existente.error || existente.data) return callback(null);
+
+        var insercion = await supabase.from("sanitarios").insert(nuevoSanitario).select("id").maybeSingle();
+        if (insercion.error || !insercion.data) return callback(null);
         
-        conexion.query(query, [u, p], function(error, resultados) {
-            if (error) {
-                console.error("Error en BD durante el login:", error);
-                return callback(null); // Si la BD falla, denegamos el acceso devolviendo null
-            }
-            
-            if (resultados.length > 0) {
-                callback(resultados[0].id); // Credenciales correctas: devolvemos su ID
-            } else {
-                callback(null); // Credenciales incorrectas
-            }
-        });
+        console.log("Nuevo sanitario registrado:", nuevoSanitario.usuario);
+        callback(insercion.data.id); 
     });
 
-    appRPC.registerAsync("obtenerSanitario", function(id, callback) {
-        conexion.query("SELECT * FROM sanitarios WHERE id = ?", [id], function(error, resultados) {
-            if (error || resultados.length === 0) {
-                return callback(null); // Si hay error o no existe, devolvemos null
-            }
-            callback(resultados[0]); // Devolvemos el objeto del sanitario
-        });
+    appRPC.registerAsync("actualizarSanitario", async function(id, datosNuevos, callback) {
+        var actualizacion = await supabase.from("sanitarios").update({
+            usuario: datosNuevos.usuario,
+            password: datosNuevos.password,
+            nombre: datosNuevos.nombre,
+            apellidos: datosNuevos.apellidos,
+            id_area: datosNuevos.id_area
+        }).eq("id", id).select("id").maybeSingle();
+
+        if (actualizacion.error || !actualizacion.data) return callback(false);
+        console.log("Datos actualizados para el ID:", id);
+        callback(true);
     });
 
-    appRPC.registerAsync("crearSanitario", function(nuevoSanitario, callback) {
-        // 1. Comprobamos si el nombre de usuario ya está cogido
-        conexion.query("SELECT id FROM sanitarios WHERE usuario = ?", [nuevoSanitario.usuario], function(error, resultados) {
-            if (error) return callback(null);
-            if (resultados.length > 0) return callback(null); // Ya existe, abortamos
-
-            // 2. Si está libre, lo insertamos. 
-            // MySQL calculará el ID automáticamente gracias al Auto Increment
-            conexion.query("INSERT INTO sanitarios SET ?", nuevoSanitario, function(error, insercion) {
-                if (error) {
-                    console.error("Error al crear:", error);
-                    return callback(null);
-                }
-                console.log("Nuevo sanitario registrado:", nuevoSanitario.usuario);
-                // insercion.insertId contiene el ID que MySQL acaba de generar
-                callback(insercion.insertId); 
-            });
-        });
+    appRPC.registerAsync("obtenerCategorias", async function(callback) {
+        var resultado = await supabase.from("categorias").select("*");
+        callback(resultado.error ? [] : resultado.data);
     });
 
-    appRPC.registerAsync("actualizarSanitario", function(id, datosNuevos, callback) {
-        var query = "UPDATE sanitarios SET usuario = ?, password = ?, nombre = ?, apellidos = ?, id_area = ? WHERE id = ?";
-        var valores = [datosNuevos.usuario, datosNuevos.password, datosNuevos.nombre, datosNuevos.apellidos, datosNuevos.id_area, id];
+    appRPC.registerAsync("obtenerModelos", async function(callback) {
+        var resultado = await supabase.from("modelos").select("*");
+        callback(resultado.error ? [] : resultado.data);
+    });
+
+    appRPC.registerAsync("obtenerRecursos", async function(idModelo, callback) {
+        var consulta = supabase.from("recursos").select("*");
+        if (idModelo != null) {
+            consulta = consulta.eq("modelo", idModelo).eq("estado", 0);
+        }
+        var resultado = await consulta;
+        callback(resultado.error ? [] : resultado.data);
+    });
+    
+    appRPC.registerAsync("obtenerUbicaciones", async function(callback) {
+        var resultado = await supabase.from("ubicaciones").select("*");
+        callback(resultado.error ? [] : resultado.data);
+    });
+
+    appRPC.registerAsync("obtenerResenyas", async function(idRecurso, callback) {
+        var consulta = supabase.from("resenas").select("*");
+        if (idRecurso != null) consulta = consulta.eq("recurso", idRecurso);
+        var resultado = await consulta;
+        callback(resultado.error ? [] : resultado.data);
+    });
+    
+    appRPC.registerAsync("obtenerReservas", async function(idSanitario, callback) {
+        var resultado = await supabase.from("reservas").select("*").eq("sanitario", idSanitario);
+        callback(resultado.error ? [] : resultado.data);
+    });
+
+    appRPC.registerAsync("iniciarReserva", async function(idReserva, callback) {
+        var busqueda = await supabase.from("reservas").select("recurso").eq("id", idReserva).maybeSingle();
+        if (busqueda.error || !busqueda.data) return callback(false);
         
-        conexion.query(query, valores, function(error, resultados) {
-            if (error) {
-                console.error("Error al actualizar:", error);
-                return callback(false);
-            }
-            
-            // affectedRows nos dice cuántas filas se han modificado. Si es > 0, ha sido un éxito.
-            if (resultados.affectedRows > 0) {
-                console.log("Datos actualizados para el ID:", id);
-                callback(true);
-            } else {
-                callback(false);
-            }
-        });
+        var idRecurso = busqueda.data.recurso;
+        var r1 = await supabase.from("reservas").update({ fecha_inicio: new Date() }).eq("id", idReserva);
+        var r2 = await supabase.from("recursos").update({ estado: 1 }).eq("id", idRecurso);
+        
+        if (r1.error || r2.error) return callback(false);
+        console.log("Recurso retirado para la reserva:", idReserva);
+        callback(true);
     });
 
-    
-
-    appRPC.registerAsync("obtenerCategorias", function(callback) {
-        conexion.query("SELECT * FROM categorias", function(error, resultados) {
-            callback(error ? [] : resultados); 
-        });
+    appRPC.registerAsync("cancelarReserva", async function(idReserva, callback) {
+        var resultado = await supabase.from("reservas").delete().eq("id", idReserva).select("id").maybeSingle();
+        if (resultado.error) return callback(false);
+        callback(resultado.data != null);
     });
 
-    appRPC.registerAsync("obtenerModelos", function(callback) {
-        conexion.query("SELECT * FROM modelos", function(error, resultados) {
-            callback(error ? [] : resultados); 
-        });
+    appRPC.registerAsync("finalizarReserva", async function(idReserva, callback) {
+        var busqueda = await supabase.from("reservas").select("recurso").eq("id", idReserva).maybeSingle();
+        if (busqueda.error || !busqueda.data) return callback(false);
+        
+        var idRecurso = busqueda.data.recurso;
+        var r1 = await supabase.from("reservas").update({ fecha_fin: new Date() }).eq("id", idReserva);
+        var r2 = await supabase.from("recursos").update({ estado: 0 }).eq("id", idRecurso);
+        
+        if (r1.error || r2.error) return callback(false);
+        console.log("Recurso devuelto para la reserva:", idReserva);
+        callback(true);
     });
 
-    appRPC.registerAsync("obtenerRecursos", function(idModelo, callback) {
-        if (idModelo == null) {
-            conexion.query("SELECT * FROM recursos", function(error, resultados) {
-                callback(error ? [] : resultados); 
-            });
-        } else {
-            // Buscamos directamente en MySQL los recursos de ese modelo que estén operativos (estado = 0)
-            conexion.query("SELECT * FROM recursos WHERE modelo = ? AND estado = 0", [idModelo], function(error, resultados) {
-                callback(error ? [] : resultados); 
-            });
-        }
-    });
-    
-    appRPC.registerAsync("obtenerUbicaciones", function(callback) {
-        conexion.query("SELECT * FROM ubicaciones", function(error, resultados) {
-            callback(error ? [] : resultados); 
-        });
-    });
-
-    appRPC.registerAsync("obtenerResenyas", function(idRecurso, callback) {
-        if (idRecurso == null) {
-            conexion.query("SELECT * FROM resenas", function(error, resultados) {
-                callback(error ? [] : resultados); 
-            });
-        } else {
-            // Sustituimos el filter() de javascript por un WHERE en SQL
-            conexion.query("SELECT * FROM resenas WHERE recurso = ?", [idRecurso], function(error, resultados) {
-                callback(error ? [] : resultados); 
-            });
-        }
-    });
-    
-
-
-    
-    appRPC.registerAsync("obtenerReservas", function(idSanitario, callback) {
-        conexion.query("SELECT * FROM reservas WHERE sanitario = ?", [idSanitario], function(error, resultados) {
-            callback(error ? [] : resultados);
-        });
-    });
-
-    appRPC.registerAsync("iniciarReserva", function(idReserva, callback) {
-        // Miramos qué recurso pertenece a esta reserva
-        conexion.query("SELECT recurso FROM reservas WHERE id = ?", [idReserva], function(error, resultados) {
-            if (error || resultados.length === 0) return callback(false);
-            var idRecurso = resultados[0].recurso;
-            
-            // Actualizamos la reserva poniendo la fecha de inicio actual
-            conexion.query("UPDATE reservas SET fecha_inicio = ? WHERE id = ?", [new Date(), idReserva], function(err1) {
-                if (err1) return callback(false);
-                
-                // Marcamos el recurso como ocupado (estado = 1)
-                conexion.query("UPDATE recursos SET estado = 1 WHERE id = ?", [idRecurso], function(err2) {
-                    if (err2) return callback(false);
-                    console.log("Recurso retirado para la reserva:", idReserva);
-                    callback(true);
-                });
-            });
-        });
-    });
-
-    appRPC.registerAsync("cancelarReserva", function(idReserva, callback) {
-        conexion.query("DELETE FROM reservas WHERE id = ?", [idReserva], function(error, resultados) {
-            if (error) return callback(false);
-            callback(resultados.affectedRows > 0); // Si borró algo, devuelve true
-        });
-    });
-
-    appRPC.registerAsync("finalizarReserva", function(idReserva, callback) {
-        // Miramos qué recurso pertenece a esta reserva
-        conexion.query("SELECT recurso FROM reservas WHERE id = ?", [idReserva], function(error, resultados) {
-            if (error || resultados.length === 0) return callback(false);
-            var idRecurso = resultados[0].recurso;
-            
-            // Actualizamos la reserva poniendo la fecha de fin
-            conexion.query("UPDATE reservas SET fecha_fin = ? WHERE id = ?", [new Date(), idReserva], function(err1) {
-                if (err1) return callback(false);
-                
-                // Devolvemos el recurso a estado libre (estado = 0)
-                conexion.query("UPDATE recursos SET estado = 0 WHERE id = ?", [idRecurso], function(err2) {
-                    if (err2) return callback(false);
-                    console.log("Recurso devuelto para la reserva:", idReserva);
-                    callback(true);
-                });
-            });
-        });
-    });
-
-    appRPC.registerAsync("crearResenya", function(idRecurso, idSanitario, valoracion, descripcion, callback) {
+    appRPC.registerAsync("crearResenya", async function(idRecurso, idSanitario, valoracion, descripcion, callback) {
         var nuevaResena = {
             recurso: idRecurso,
             sanitario: idSanitario,
@@ -188,17 +125,13 @@ module.exports = function(datos) {
             descripcion: descripcion
         };
         
-        conexion.query("INSERT INTO resenas SET ?", nuevaResena, function(error, insercion) {
-            if (error) return callback(null);
-            console.log("Nueva reseña guardada, ID:", insercion.insertId);
-            callback(insercion.insertId); 
-        });
+        var insercion = await supabase.from("resenas").insert(nuevaResena).select("id").maybeSingle();
+        if (insercion.error || !insercion.data) return callback(null);
+        console.log("Nueva reseña guardada, ID:", insercion.data.id);
+        callback(insercion.data.id); 
     });
 
-    
-
-
-    appRPC.registerAsync("reservarRecurso", function(idRecurso, idSanitario, horasEstimadas, callback) {
+    appRPC.registerAsync("reservarRecurso", async function(idRecurso, idSanitario, horasEstimadas, callback) {
         var nuevaReserva = {
             recurso: idRecurso,
             sanitario: idSanitario,
@@ -206,44 +139,36 @@ module.exports = function(datos) {
             fecha_peticion: new Date()
         };
         
-        conexion.query("INSERT INTO reservas SET ?", nuevaReserva, function(error, insercion) {
-            if (error) return callback(null);
-            callback(insercion.insertId); 
-        });
+        var insercion = await supabase.from("reservas").insert(nuevaReserva).select("id").maybeSingle();
+        if (insercion.error || !insercion.data) return callback(null);
+        callback(insercion.data.id); 
     });
 
-
-    appRPC.registerAsync("tiempoPendiente", function(idRecurso, callback) {
-        // Le pedimos a MySQL que busque directamente la reserva de este recurso que ha empezado pero no ha terminado
-        var query = "SELECT horas_estimadas FROM reservas WHERE recurso = ? AND fecha_inicio IS NOT NULL AND fecha_fin IS NULL";
-        
-        conexion.query(query, [idRecurso], function(error, resultados) {
-            if (error || resultados.length === 0) {
-                return callback(0); // Si no hay reserva activa, el tiempo pendiente es 0
-            }
-            callback(resultados[0].horas_estimadas);
-        });
+    appRPC.registerAsync("tiempoPendiente", async function(idRecurso, callback) {
+        var resultado = await supabase.from("reservas")
+            .select("horas_estimadas")
+            .eq("recurso", idRecurso)
+            .not("fecha_inicio", "is", null)
+            .is("fecha_fin", null)
+            .maybeSingle();
+            
+        if (resultado.error || !resultado.data) return callback(0);
+        callback(resultado.data.horas_estimadas);
     });
  
-    appRPC.registerAsync("asignarArea", function(idSanitario, codigoPostal, callback) {
-        var query = "UPDATE sanitarios SET area = ? WHERE id = ?";
-        
-        conexion.query(query, [codigoPostal, idSanitario], function(error, resultados) {
-            console.log("2");
-            if (error) {
-                console.error("Error al actualizar:", error);
-                return callback(false);
-            }
+    appRPC.registerAsync("asignarArea", async function(idSanitario, codigoPostal, callback) {
+        var actualizacion = await supabase.from("sanitarios")
+            .update({ area: codigoPostal })
+            .eq("id", idSanitario)
+            .select("id")
+            .maybeSingle();
             
-            // affectedRows nos dice cuántas filas se han modificado. Si es > 0, ha sido un éxito.
-            if (resultados.affectedRows > 0) {
-                console.log("1")
-                console.log("Area añadida para el sanitario");
-                callback(true);
-            } else {
-                callback(false);
-            }
-        });
+        if (actualizacion.error) return callback(false);
+        if (actualizacion.data) {
+            console.log("Area añadida para el sanitario");
+            callback(true);
+        } else {
+            callback(false);
+        }
     });
-//LA PAGINA DE SANITARIO SE ABRE CON http://localhost:3000/sanitario.html !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 };
