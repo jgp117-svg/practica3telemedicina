@@ -12,7 +12,7 @@
 				app = port;
 				port = 3501;
 			}
-			this.url = "http://" + server + ":" + port + "/RPC/" + app + "/";
+			this.url = "https://" + server + ":" + port + "/RPC/" + app + "/";
 		}
 
 		procedure(name) {
