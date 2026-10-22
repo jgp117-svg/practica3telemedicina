@@ -1,6 +1,12 @@
 var conexion = require('./conexion_mysql.js');
 var jwt = require('jsonwebtoken');
 var CLAVE_SECRETA = "mi_clave_secreta_telemedicina";
+const {createClient} = require('@supabase/supabase-js');
+const supabaseUrl = 'https://wtykvfgfwzmsktvkkwcn.supabase.co';
+const supabaseKey = 'sb_publishable_YIvkOe8llfa2yH7En4iJYg_Dlt-6VbO'
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+
 
 function verificarToken(req, res, next) {
     var autorizacion = req.headers.authorization;
