@@ -12,7 +12,13 @@
 				app = port;
 				port = 3501;
 			}
-			this.url = "https://" + server + ":" + port + "/RPC/" + app + "/";
+			if (port === 443) {
+                // Si usamos el puerto 443, forzamos HTTPS y no imprimimos el puerto en la URL
+                this.url = "https://" + server + "/RPC/" + app + "/";
+            } else {
+                // Comportamiento original para local (http y puerto 3501)
+                this.url = "http://" + server + ":" + port + "/RPC/" + app + "/";
+            }
 		}
 
 		procedure(name) {
