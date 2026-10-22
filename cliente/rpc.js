@@ -12,13 +12,10 @@
 				app = port;
 				port = 3501;
 			}
-			if (port === 443) {
-                // Si usamos el puerto 443, forzamos HTTPS y no imprimimos el puerto en la URL
-                this.url = "https://" + server + "/RPC/" + app + "/";
-            } else {
-                // Comportamiento original para local (http y puerto 3501)
-                this.url = "http://" + server + ":" + port + "/RPC/" + app + "/";
-            }
+			
+            // Forzamos directamente la conexión segura (HTTPS) sin el puerto, 
+            // ya que Render lo gestiona automáticamente por debajo.
+            this.url = "https://" + server + "/RPC/" + app + "/";
 		}
 
 		procedure(name) {
